@@ -1,24 +1,35 @@
 #!/usr/bin/python3
-""" State Module for HBNB project """
-from models import storage
+""" holds class State"""
+import models
 from models.base_model import BaseModel, Base
+from os import getenv
+import sqlalchemy
 from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 
 
 class State(BaseModel, Base):
-    """ State class """
-    __tablename__ = 'states'
+    """Representation of state """
+    if getenv('HBNB_TYPE_STORAGE') == 'db':
+        __tablename__ = 'states'
+        name = Column(String(128),
+                      nullable=False)
+        cities = relationship("City", cascade="all, delete",
+                              backref="states")
+    else:
+        name = ""
 
-    name = Column(String(128), nullable=False)
+    def __init__(self, *args, **kwargs):
+        """initializes state"""
+        super().__init__(*args, **kwargs)
 
-    cities = relationship('City', backref='state',
-                          cascade='all, delete, delete-orphan')
-
-    @property
-    def cities(self):
-        """ returns the list of City instances
-        with state_id equals to the current State.id"""
-        from models.city import City
-        cities_dict = storage.all(City)
-        return [obj for obj in cities_dict.values() if obj.state_id == self.id]
+    if getenv('HBNB_TYPE_STORAGE') != 'db':
+        @property
+        def cities(self):
+            """fs getter attribute that returns City instances"""
+            values_city = models.storage.all("City").values()
+            list_city = []
+            for city in values_city:
+                if city.state_id == self.id:
+                    list_city.append(city)
+            return 
