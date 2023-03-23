@@ -25,8 +25,10 @@ class DBStorage():
         host = getenv('HBNB_MYSQL_HOST', 'localhost')
         database = getenv('HBNB_MYSQL_DB', 'hbnb_dev_db')
 
-        self.__engine = create_engine(f'mysql+mysqldb://{user}:{password}@{host}/{database}',
-                                      pool_pre_ping=True)
+        self.__engine = create_engine(
+            f'mysql+mysqldb://{user}:{password}@{host}/{database}',
+            pool_pre_ping=True
+        )
 
         if (getenv('HBNB_ENV') == 'test'):
             Base.metadata.drop_all(bind=self.__engine)
@@ -43,7 +45,7 @@ class DBStorage():
             amenity_query = self.__session.query(Amenity).all()
             place_query = self.__session.query(Place).all()
             review_query = self.__session.query(Review).all()
-    
+
             return [state_query, city_query, user_query, amenity_query,
                     place_query, review_query]
 

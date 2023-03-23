@@ -5,6 +5,15 @@ from sqlalchemy import Column, String, Integer, Float, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from os import getenv
 
+if getenv('HBNB_TYPE_STORAGE') == 'db':
+    place_amenity = Table('place_amenity', Base.metadata,
+                          Column('place_id', String(60),
+                                 ForeignKey('places.id'), primary_key=True,
+                                 nullable=False),
+                          Column('amenity_id', String(60),
+                                 ForeignKey('amenities.id'), primary_key=True,
+                                 nullable=False))
+
 
 class Place(BaseModel, Base):
     """ A place to stay """
@@ -21,16 +30,9 @@ class Place(BaseModel, Base):
         price_by_night = Column(Integer, nullable=False, default=0)
         latitude = Column(Float, nullable=True)
         longitude = Column(Float, nullable=True)
-        amenity_ids = []
-
-        place_amenity = Table('place_amenity', Base.metadata,
-                              Column('place_id', String(60),
-                                     ForeignKey('places.id'), primary_key=True),
-                              Column('amenity_id', String(60),
-                                     ForeignKey('amenities.id'), primary_key=True))
 
         '''amenities for DBStorage'''
-        amenities = relationship('Amenity', backref='places',
+        amenities = relationship('Amenity', backref='place_amenities',
                                  secondary=place_amenity, viewonly=False)
 
         '''reviews for DBStorage'''
@@ -48,6 +50,7 @@ class Place(BaseModel, Base):
         latitude = 0.0
         longitude = 0.0
         amenity_ids = []
+
         '''amenities for FileStorage'''
         @property
         def amenities(self):
@@ -55,24 +58,24 @@ class Place(BaseModel, Base):
             returns the list of Amenity instances based on the attribute
             amenity_ids that contains all Amenity.id linked to the Place
             '''
-            from os import getenv
-            if getenv('HBNB_TYPE_STORAGE') != 'db':
-                from models import storage
-                from models.amenity import Amenity
-                result = storage.all(Amenity)
-                return [amenity_obj for amenity_obj in result.values()
-                        if amenity_obj.id in self.amenity_ids]
+            from models import storage
+            from models.amenity import Amenity
+            result = storage.all(Amenity)
+            return [amenity_obj for amenity_obj in result.values()
+                    if amenity_obj.id in self.amenity_ids]
 
         @amenities.setter
         def amenities(self, amenity):
             """
             Setter attribute amenities that handles append method for adding an
-            Amenity.id to the attribute amenity_ids. This method should accept only
-            Amenity object, otherwise, do nothing.
+            Amenity.id to the attribute amenity_ids. This method should accept
+            only Amenity object, otherwise, do nothing.
             """
             if amenity is not None:
-                if type(amenity).__name__ == 'Amenity':
-                    self.amenity_ids.append(amenity.id)
+                from models.amenity import Amenity
+                if isinstance(amenity, Amenity):
+                    if amenity.id not in self.amenity_ids:
+                        self.amenity_ids.append(amenity.id)
 
         '''reviews for FileStorage'''
         @property
@@ -82,10 +85,8 @@ class Place(BaseModel, Base):
             with place_id equals to the current Place.id => It will be the
             FileStorage relationship between Place and Review
             '''
-            from os import getenv
-            if getenv('HBNB_TYPE_STORAGE') != 'db':
-                from models import storage
-                from models.review import Review
-                result = storage.all(Review)
-                return [review_obj for review_obj in result.values()
-                        if self.id == review_obj.place_id]
+            from models import storage
+            from models.review import Review
+            result = storage.all(Review)
+            return [review_obj for review_obj in result.values()
+                    if self.id == review_obj.place_id]

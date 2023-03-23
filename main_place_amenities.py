@@ -29,6 +29,10 @@ amenity_2.save()
 amenity_3 = Amenity(name="Oven")
 amenity_3.save()
 
+print("=======================================")
+print(amenity_2.place_amenities)
+print("=======================================")
+
 # link place_1 with 2 amenities
 place_1.amenities.append(amenity_1)
 place_1.amenities.append(amenity_2)
@@ -37,6 +41,14 @@ place_1.amenities.append(amenity_2)
 place_2.amenities.append(amenity_1)
 place_2.amenities.append(amenity_2)
 place_2.amenities.append(amenity_3)
+
+print("=======================================")
+print(amenity_2.place_amenities)
+print("=======================================")
+
+print("=======================================")
+print(place_2.amenities)
+print("=======================================")
 
 storage.save()
 
